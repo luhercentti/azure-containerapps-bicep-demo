@@ -4,7 +4,7 @@
 
 # Azure Full Stack Task App — Demo
 
-A full-stack task management application demonstrating how to deploy a containerized Python API and a static React frontend to Microsoft Azure, with infrastructure fully provisioned via Terraform.
+A full-stack task management application demonstrating how to deploy a containerized Python API and a static React frontend to Microsoft Azure, with infrastructure fully provisioned via Azure Bicep.
 
 ---
 
@@ -14,7 +14,7 @@ A full-stack task management application demonstrating how to deploy a container
 |-----------|-----------|---------------|
 | Backend API | Python / FastAPI | Azure Container Apps |
 | Frontend UI | React 18 (CRA) | Azure Static Web Apps |
-| Infrastructure | Terraform (AzureRM ~3.0) | East US |
+| Infrastructure | Azure Bicep | East US |
 
 ---
 
@@ -102,9 +102,9 @@ npm run build
 
 ---
 
-## Infrastructure (`/terraform`)
+## Infrastructure (`/bicep`)
 
-Terraform configuration that provisions all required Azure resources:
+Azure Bicep configuration that provisions all required Azure resources:
 
 | Resource | Details |
 |----------|---------|
@@ -118,20 +118,21 @@ Terraform configuration that provisions all required Azure resources:
 ### Deploy
 
 ```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
+# Deploy to an existing resource group
+az deployment group create \
+  --resource-group luis.angelo \
+  --template-file bicep/main.bicep \
+  --parameters bicep/parameters.bicepparam
 ```
 
 ### Outputs
 
 | Output | Description |
 |--------|-------------|
-| `container_app_url` | Public HTTPS URL of the FastAPI backend |
-| `static_web_app_url` | Public URL of the React frontend |
-| `acr_login_server` | ACR login server (for pushing Docker images) |
-| `resource_group_name` | Azure resource group name |
+| `containerAppUrl` | Public HTTPS URL of the FastAPI backend |
+| `staticWebAppUrl` | Public URL of the React frontend |
+| `acrLoginServer` | ACR login server (for pushing Docker images) |
+| `resourceGroupName` | Azure resource group name |
 
 ---
 
@@ -153,10 +154,9 @@ terraform apply
 │       ├── App.js         # Main React component (task UI)
 │       ├── App.test.js
 │       └── index.js
-├── terraform/
-│   ├── main.tf            # Azure resource definitions
-│   ├── variables.tf       # Input variables (project name, ACR name)
-│   └── outputs.tf         # Output values
+├── bicep/
+│   ├── main.bicep         # Azure resource definitions
+│   └── parameters.bicepparam  # Input parameters (project name, ACR name, location)
 └── readme.md
 ```
 
