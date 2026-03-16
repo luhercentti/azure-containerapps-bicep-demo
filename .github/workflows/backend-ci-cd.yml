@@ -39,11 +39,25 @@ jobs:
         cd backend
         python -m pytest tests/ -v || echo "No tests found, skipping..."
     
+    - name: Security scan (Bandit)
+      run: |
+        pip install bandit
+        bandit -r backend/ -ll -ii
+
     - name: Build Docker image
       run: |
         cd backend
         docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-    
+
+    - name: Scan image for vulnerabilities (Trivy)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: table
+        exit-code: 1
+        severity: CRITICAL,HIGH
+        ignore-unfixed: true
+
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
