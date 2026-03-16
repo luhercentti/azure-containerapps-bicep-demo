@@ -62,11 +62,6 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Register required resource providers
-      run: |
-        az provider register -n Microsoft.App --wait
-        az provider register -n Microsoft.ContainerRegistry --wait
-
     - name: Build and push Docker image
       run: |
         cd backend
