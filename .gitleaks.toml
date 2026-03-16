@@ -1,0 +1,7 @@
+title = "Gitleaks config"
+
+[allowlist]
+  description = "Allowlisted commits"
+  # terraform/main.tf used the variable name "registry-password" which is not a real
+  # secret — it is a reference name for an Azure Container App secret, not a credential.
+  commits = ["42737dff99b9dad1caa09627b4c3c0c31a009cb9"]

@@ -16,7 +16,20 @@ env:
   CONTAINER_APP_NAME: lhc-api
 
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # full history needed for git log scan
+    - name: Scan for secrets (Gitleaks)
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_CONFIG: .gitleaks.toml
+
   build-and-test:
+    needs: secret-scan
     runs-on: ubuntu-latest
     
     steps:
