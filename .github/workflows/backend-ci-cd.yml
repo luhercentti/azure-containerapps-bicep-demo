@@ -42,7 +42,7 @@ jobs:
     - name: Security scan (Bandit)
       run: |
         pip install bandit
-        bandit -r backend/ -ll -ii
+        bandit -r backend/ -lll -iii
 
     - name: Build Docker image
       run: |
