@@ -9,6 +9,44 @@ param acrName string = 'acrlhc'
 @description('Azure region for resources')
 param location string = resourceGroup().location
 
+@description('GitHub organisation or user name (e.g. my-org)')
+param githubOrg string
+
+@description('GitHub repository name (e.g. azure-containerapps-bicep-demo)')
+param githubRepo string
+
+// ── GitHub Actions Identity ──────────────────────────────────────────────────
+
+// User-Assigned Managed Identity used by GitHub Actions via OIDC
+resource githubIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${projectName}-github-identity'
+  location: location
+}
+
+// Contributor role on this resource group
+var contributorRoleId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, githubIdentity.id, contributorRoleId)
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleId)
+    principalId: githubIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Federated credential — trusts pushes to main from the GitHub repo
+resource federatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = {
+  parent: githubIdentity
+  name: 'github-main'
+  properties: {
+    issuer: 'https://token.actions.githubusercontent.com'
+    subject: 'repo:${githubOrg}/${githubRepo}:ref:refs/heads/main'
+    audiences: ['api://AzureADTokenExchange']
+  }
+}
+
+// ── Application Resources ─────────────────────────────────────────────────────
+
 // Container Registry
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: acrName
@@ -79,7 +117,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
           value: acr.listCredentials().passwords[0].value
         }
       ]
-      revisionMode: 'Single'
+      activeRevisionsMode: 'Single'
     }
     template: {
       containers: [
@@ -131,3 +169,8 @@ output containerAppUrl string = 'https://${containerApp.properties.configuration
 output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
 output acrLoginServer string = acr.properties.loginServer
 output resourceGroupName string = resourceGroup().name
+
+// GitHub Actions OIDC outputs (use these to configure GitHub secrets)
+output githubIdentityClientId string = githubIdentity.properties.clientId
+output githubIdentityTenantId string = tenant().tenantId
+output subscriptionId string = subscription().subscriptionId

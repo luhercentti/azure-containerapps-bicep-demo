@@ -117,8 +117,10 @@ Azure Bicep configuration that provisions all required Azure resources:
 
 ### Deploy
 
-```bash
-# Deploy to an existing resource group
+# Create the resource group in the new subscription
+az group create --name luis.angelo --location eastus
+
+# Then deploy
 az deployment group create \
   --resource-group luis.angelo \
   --template-file bicep/main.bicep \
